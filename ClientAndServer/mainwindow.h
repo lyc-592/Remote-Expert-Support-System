@@ -1,0 +1,86 @@
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
+#include <QMainWindow>
+#include <QTextEdit>
+#include <QLineEdit>
+#include <QSpinBox>
+#include <QPushButton>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGroupBox>
+#include "server.h"
+#include "client.h"
+#include "message.h"
+
+class MainWindow : public QMainWindow
+{
+    Q_OBJECT
+
+public:
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
+
+private slots:
+    void on_startServerButton_clicked();
+    void on_connectButton_clicked();
+    void on_sendButton_clicked();
+    void on_attachButton_clicked();
+
+    void onClientConnected();
+    void onClientDisconnected();
+    void onMessageReceived(const QByteArray &message);
+
+    void onServerClientConnected();
+    void onServerClientDisconnected();
+    void onServerNewMessage(const QByteArray &message);
+
+private:
+    // UI 控件
+    QWidget *centralWidget;
+    QVBoxLayout *mainLayout;
+
+    QGroupBox *serverGroup;
+    QHBoxLayout *serverLayout;
+    QSpinBox *serverPortSpinBox;
+    QPushButton *startServerButton;
+
+    QGroupBox *clientGroup;
+    QHBoxLayout *clientLayout;
+    QLineEdit *hostLineEdit;
+    QSpinBox *clientPortSpinBox;
+    QPushButton *connectButton;
+
+    QGroupBox *messageGroup;
+    QVBoxLayout *messageLayout;
+    QTextEdit *messageTextEdit;
+    QHBoxLayout *attachmentLayout;
+    QPushButton *attachButton;
+    QLabel *attachmentLabel;
+    QHBoxLayout *buttonLayout;
+    QPushButton *sendButton;
+
+    QGroupBox *chatGroup;
+    QVBoxLayout *chatLayout;
+    QTextEdit *chatTextEdit;
+
+    QGroupBox *logGroup;
+    QVBoxLayout *logLayout;
+    QTextEdit *logTextEdit;
+
+    // 业务对象
+    Server *m_server;
+    Client *m_client;
+
+    // 附件相关
+    QString m_attachmentPath;
+    MessageType m_attachmentType;
+
+    void displayMessage(const Message &message);
+    void addLogMessage(const QString &message);
+    void setupUI();
+    void clearAttachment();
+};
+
+#endif // MAINWINDOW_H
