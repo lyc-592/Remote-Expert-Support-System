@@ -1,0 +1,49 @@
+QMainWindow {
+    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
+                                stop: 0 #FFFFFF, stop: 1 #EEEEF0);
+}
+
+QWidget {
+    background: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1,
+                            stop: 0 #FFFFFF, stop: 1 #EEEEF0);
+    font-family: "Segoe UI";
+    font-size: 14px;
+}
+
+/* Sidebar */
+#Sidebar {
+    background-color: #7B6DC2;
+    border-radius: 10px;
+}
+
+QToolButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 15px;
+    margin: 5px;
+    font-family: "Microsoft YaHei";   /* 字体 */
+    font-size: 20px;                  /* 字号 */
+    color: white;                     /* 字体颜色 */
+    border-radius: 12px;              /* 圆角 */
+    background-color: transparent;    /* 默认透明背景 */
+}
+
+QToolButton:checked {
+    background-color: #5a3ea6;   /* 深紫色高亮 */
+    border-radius: 15px;         /* 圆角 */
+}
+
+QToolButton:hover {
+    background-color: #7d5fc0;   /* 鼠标悬停时稍微亮一点 */
+}
+
+/* 卡片样式 */
+#Card {
+    background-color: white;
+    border-radius: 50px;
+    padding: 50px;
+}
+
+
+
+
