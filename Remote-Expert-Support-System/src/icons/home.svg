@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-  <!-- 屋顶（三角形色块） -->
-  <path fill="white" d="M2 12h20L12 4 2 12z"/>
-  <!-- 房屋墙体（矩形色块） -->
-  <path fill="white" d="M5 12v8h14v-8H5z"/>
-  <!-- 房门（小矩形色块） -->
-  <path fill="white" d="M11 16v-4h2v4h-2z"/>
-</svg>
