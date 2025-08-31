@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/qss">
+        <file>style1.qss</file>
+        <file>style.qss</file>
+        <file>icons/home.svg</file>
+        <file>icons/user.svg</file>
+        <file>icons/agenda.svg</file>
+        <file>icons/device.svg</file>
+        <file>icons/knowledge.svg</file>
+        <file>icons/history.svg</file>
+    </qresource>
+</RCC>
