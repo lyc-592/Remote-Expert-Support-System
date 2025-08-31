@@ -38,6 +38,13 @@ private:
     // 当接收到请求，首先在onReadyRead()中处理JSON文件，判断请求类型后调用这些方法
     void processLoginRequest(QTcpSocket *clientSocket, const QJsonObject &request);
     void processRegisterRequest(QTcpSocket *clientSocket, const QJsonObject &request);
+
+    void processGetUserRequest(QTcpSocket *clientSocket, const QJsonObject &request);
+
+    void processGetAgendaRequest(QTcpSocket *clientSocket, const QJsonObject &request);
+
+    void processGetContactRequest(QTcpSocket *clientSocket, const QJsonObject &request);
+
     void sendResponse(QTcpSocket *clientSocket, const QJsonObject &response);
 
     // int findJsonEnd(const QByteArray &data);

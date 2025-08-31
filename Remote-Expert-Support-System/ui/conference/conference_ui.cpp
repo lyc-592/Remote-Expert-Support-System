@@ -1,4 +1,5 @@
 #include "conference_ui.h"
+#include "buttonobjecthandler.h"
 #include <QFileDialog>
 #include <QDateTime>
 #include <QImageReader>
@@ -7,11 +8,16 @@
 #include <QFileInfo>
 #include <QMimeDatabase>
 #include <QDebug>
+#include <QTextFrame>
+#include <QTextTableCell>
+#include <QAbstractTextDocumentLayout>
+#include <QAbstractScrollArea>
+#include <QTextBrowser>
 
 ConferenceUi::ConferenceUi(QWidget *parent) :
     QMainWindow(parent),
     m_server(new Server()),
-    m_client(new Client("test_user", "1", "123")),
+    m_client(new Client()),
     m_attachmentPath(""),
     m_attachmentType(TextMessage)
 {
@@ -105,8 +111,9 @@ void ConferenceUi::setupUI()
     chatGroup = new QGroupBox("Chat", centralWidget);
     chatLayout = new QVBoxLayout(chatGroup);
 
-    chatTextEdit = new QTextEdit(chatGroup);
+    chatTextEdit = new QTextBrowser(chatGroup);
     chatTextEdit->setReadOnly(true);
+    chatTextEdit->setAcceptRichText(true);
     chatLayout->addWidget(chatTextEdit);
 
     mainLayout->addWidget(chatGroup);
@@ -121,11 +128,15 @@ void ConferenceUi::setupUI()
 
     mainLayout->addWidget(logGroup);
 
+    m_imageMap = QMap<QString, QByteArray>();
+    m_fileMap = QMap<QString, QPair<QByteArray, QString>>();
+
     // 连接按钮信号
     connect(startServerButton, &QPushButton::clicked, this, &ConferenceUi::on_startServerButton_clicked);
     connect(connectButton, &QPushButton::clicked, this, &ConferenceUi::on_connectButton_clicked);
     connect(sendButton, &QPushButton::clicked, this, &ConferenceUi::on_sendButton_clicked);
     connect(attachButton, &QPushButton::clicked, this, &ConferenceUi::on_attachButton_clicked);
+    connect(chatTextEdit, &QTextBrowser::anchorClicked, this, &ConferenceUi::onAnchorClicked);
 
     setWindowTitle("Real Time Communication");
     resize(800, 600);
@@ -211,13 +222,14 @@ void ConferenceUi::on_sendButton_clicked()
         emit m_server->newMessage(data);
     } else if (m_client->isConnected()) {
         m_client->sendMessage(data);
+        // qDebug() << "Message Sent: " << data;
     } else {
         addLogMessage("Not connected. Cannot send message.");
         return;
     }
 
     // 显示自己发送的消息
-    // displayMessage(message);
+    displayMessage(message);
 }
 
 void ConferenceUi::clearAttachment()
@@ -280,16 +292,30 @@ void ConferenceUi::displayMessage(const Message &message)
     {
         QImage image = message.image();
         if (!image.isNull()) {
-            chatTextEdit->append("[" + time + "] " + senderPrefix + "Received image: ");
+            chatTextEdit->append("[" + time + "] " + senderPrefix + "Received image: \n");
             QTextCursor cursor = chatTextEdit->textCursor();
             cursor.insertImage(image.scaled(200, 200, Qt::KeepAspectRatio));
+            // 添加一个可点击的链接作为下载按钮
+            QString downloadLink = QString("<a href=\"download://image/%1\" style=\"color: blue; text-decoration: underline;\">[下载图片]</a>").arg(time);
+            chatTextEdit->append(downloadLink);
+
+            // 存储图片数据以便下载
+            m_imageMap[time] = message.data();
         }
         break;
     }
     case FileMessage:
+    {
         chatTextEdit->append("[" + time + "] " + senderPrefix + "Received file: " + message.fileName() +
                              " (" + QString::number(message.fileSize() / 1024) + " KB)");
+        // 添加一个可点击的链接作为下载按钮
+        QString downloadLink = QString("<a href=\"download://file/%1\" style=\"color: blue; text-decoration: underline;\">[下载文件]</a>").arg(time);
+        chatTextEdit->append(downloadLink);
+
+        // 存储图片数据以便下载
+        m_fileMap[time] = qMakePair(message.data(), message.fileName());
         break;
+    }
     }
 }
 
@@ -297,4 +323,71 @@ void ConferenceUi::addLogMessage(const QString &message)
 {
     QString time = QDateTime::currentDateTime().toString("hh:mm:ss");
     logTextEdit->append("[" + time + "] " + message);
+}
+
+void ConferenceUi::downloadImage(const QString &timestamp)
+{
+    if (!m_imageMap.contains(timestamp)) {
+        QMessageBox::warning(this, "Error", "Image data not found");
+        return;
+    }
+
+    QString filePath = QFileDialog::getSaveFileName(this, "Save Image", "image.png", "PNG Images (*.png);;JPEG Images (*.jpg *.jpeg)");
+
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, "Error", "Cannot open file for writing: " + file.errorString());
+        return;
+    }
+
+    file.write(m_imageMap[timestamp]);
+    file.close();
+
+    QMessageBox::information(this, "Success", "Image saved successfully");
+}
+
+void ConferenceUi::downloadFile(const QString &timestamp)
+{
+    if (!m_fileMap.contains(timestamp)) {
+        QMessageBox::warning(this, "Error", "File data not found");
+        return;
+    }
+
+    QPair<QByteArray, QString> fileData = m_fileMap[timestamp];
+    QString suggestedName = fileData.second;
+
+    QString filePath = QFileDialog::getSaveFileName(this, "Save File", suggestedName, "All Files (*)");
+
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning(this, "Error", "Cannot open file for writing: " + file.errorString());
+        return;
+    }
+
+    file.write(fileData.first);
+    file.close();
+
+    QMessageBox::information(this, "Success", "File saved successfully");
+}
+
+void ConferenceUi::onAnchorClicked(const QUrl &url)
+{
+    if (url.scheme() == "download") {
+        QString type = url.host();
+        QString timestamp = url.path().mid(1); // 移除前面的斜杠
+
+        if (type == "image") {
+            downloadImage(timestamp);
+        } else if (type == "file") {
+            downloadFile(timestamp);
+        }
+    }
 }

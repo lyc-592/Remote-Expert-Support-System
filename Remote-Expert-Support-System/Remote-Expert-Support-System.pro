@@ -1,6 +1,9 @@
 QT       += core gui \
             network \
-            sql
+            sql \
+            charts \
+            multimedia \
+            multimediawidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -15,14 +18,17 @@ SOURCES += \
     client/network/client_network_manager.cpp \
     server/core/server.cpp \
     server/db/database_manager.cpp \
-    test.cpp \
     ui/conference/conference_ui.cpp \
     ui/conference/message.cpp \
-    ui/index/expert/expertmainwindow.cpp \
-    ui/index/factory/addagendadialog.cpp \
-    ui/index/factory/agendapage.cpp \
-    ui/index/factory/devicepage.cpp \
-    ui/index/factory/mainwindow.cpp \
+    ui/conference/mainwindow.cpp \
+    ui/conference/videothread.cpp \
+    ui/index/expert/expert_main_window.cpp \
+    ui/index/factory/add_agenda_dialog.cpp \
+    ui/index/factory/agenda_page.cpp \
+    ui/index/factory/chat_dialog.cpp \
+    ui/index/factory/device_page.cpp \
+    ui/index/factory/main_window.cpp \
+    ui/knowledge/data_viewer.cpp \
     ui/login/find_password_dialog.cpp \
     ui/login/login_window.cpp \
     ui/login/register_dialog.cpp \
@@ -33,15 +39,23 @@ HEADERS += \
     client/network/client_network_manager.h \
     server/db/database_manager.h \
     server/core/server.h \
+    server/entities/agenda.h \
+    server/entities/user.h \
     test/client_server_test.h \
     test/conference_test.h \
+    test/login_test.h \
+    test/video_test.h \
     ui/conference/conference_ui.h \
     ui/conference/message.h\
-    ui/index/expert/expertmainwindow.h \
-    ui/index/factory/addagendadialog.h \
-    ui/index/factory/agendapage.h \
-    ui/index/factory/devicepage.h \
-    ui/index/factory/mainwindow.h \
+    ui/conference/mainwindow.h \
+    ui/conference/videothread.h \
+    ui/index/expert/expert_main_window.h \
+    ui/index/factory/add_agenda_dialog.h \
+    ui/index/factory/agenda_page.h \
+    ui/index/factory/chat_dialog.h \
+    ui/index/factory/device_page.h \
+    ui/index/factory/main_window.h \
+    ui/knowledge/data_viewer.h \
     ui/login/find_password_dialog.h \
     ui/login/login_window.h \
     ui/login/register_dialog.h \
@@ -51,8 +65,9 @@ HEADERS += \
 
 FORMS += \
     ui/conference/conference_ui.ui \
-    ui/index/factory/addagendadialog.ui \
-    ui/index/factory/mainwindow.ui \
+    ui/conference/mainwindow.ui \
+    ui/index/factory/add_agenda_dialog.ui \
+    ui/index/factory/main_window.ui \
     ui/login/login_window.ui
 
 # Default rules for deployment.

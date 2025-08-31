@@ -1,5 +1,7 @@
 #include "database_manager.h"
 #include "../../utils/funcs.h"
+#include "../entities/user.h"
+#include "../entities/agenda.h"
 #include <QDebug>
 #include <QSqlDatabase>
 #include <QCryptographicHash>
@@ -222,7 +224,7 @@ bool DatabaseManager::validateUser(const QString& account, const QString &passwo
         qWarning() << "[用户操作错误] 数据库未连接";
         return false;
     }
-    QString encryptedPassword = encryptPassword(password);
+    QString encryptedPassword = password;
     // 查询用户表，寻找是否有用户
     QSqlQuery query(db);
     query.prepare("SELECT user_id FROM user WHERE user_account = :account AND user_password = :password");
@@ -271,27 +273,108 @@ bool DatabaseManager::addUser(UserType userType, const QString& account,
     }
 }
 
-bool DatabaseManager::getUser(int userId, UserType& userType, QString& account,
-                              QString& password, QString& contact, QString& expertSkill) {
+// 返回整个条目
+User DatabaseManager::getUser(const QString& account) {
+    User userData;
+
     if (!isConnected()) {
         qWarning() << "[用户操作错误] 数据库未连接";
-        return false;
+        return userData;
     }
 
     QSqlQuery query(db);
-    query.prepare("SELECT * FROM user WHERE user_id = :userId");
-    query.bindValue(":userId", userId);
+    query.prepare("SELECT user_id, user_type, user_account, user_password, user_contact, expert_skill FROM user WHERE user_account = :userAccount");
+    query.bindValue(":userAccount", account); // 注意占位符名称要与SQL中一致
 
-    if (!query.exec() || !query.next()) {
+    if (!query.exec()) {
         qWarning() << "[用户操作错误] 获取失败：" << query.lastError().text();
-        return false;
+        return userData;
     }
 
-    userType = static_cast<UserType>(query.value("user_type").toInt());
-    account = query.value("user_account").toString();
-    password = query.value("user_password").toString();
-    contact = query.value("user_contact").toString();
-    expertSkill = query.value("expert_skill").toString();
+    if (!query.next()) {
+        qWarning() << "[用户操作错误] 未找到用户账号：" << account;
+        return userData;
+    }
 
-    return true;
+    userData.userId = query.value("user_id").toInt();
+    userData.userType = static_cast<UserType>(query.value("user_type").toInt());
+    userData.account = query.value("user_account").toString();
+    userData.password = query.value("user_password").toString();
+    userData.contact = query.value("user_contact").toString();
+    userData.expertSkill = query.value("expert_skill").toString();
+
+    return userData;
+}
+
+QVector<Agenda> DatabaseManager::getAgenda(const int userId, const UserType userType) {
+    QVector<Agenda> agendas;
+
+    if (!isConnected()) {
+        qWarning() << "[用户操作错误] 数据库未连接";
+        return agendas;
+    }
+
+    QSqlQuery query(db);
+    if(userType == FactoryUser) {
+        query.prepare("SELECT order_id, user1_id, user2_id, device_id,"
+                      "order_status, order_create_time, predict_time, fault FROM workorder WHERE user1_id = :userId");
+    } else {
+        query.prepare("SELECT order_id, user1_id, user2_id, device_id,"
+                      "order_status, order_create_time, predict_time, fault FROM workorder WHERE user2_id = :userId");
+    }
+    query.bindValue(":userId", userId);
+
+    if (!query.exec()) {
+        qWarning() << "[用户操作错误] 获取失败：" << query.lastError().text();
+        return agendas;
+    }
+    while (query.next()) {
+        Agenda agenda;
+        agenda.orderId = query.value("order_id").toInt();
+        agenda.user1Id = query.value("user1_id").toInt();
+        agenda.user2Id = query.value("user2_id").toInt();
+        agenda.deviceId = query.value("device_id").toInt();
+        agenda.status = query.value("order_status").toInt();
+        agenda.createTime = query.value("order_create_time").toDateTime();
+        agenda.predictTime = query.value("predict_time").toDateTime();
+        agenda.fault = query.value("fault").toString();
+        agendas.append(agenda);
+        qInfo() << "GetAgenda: " << agenda.orderId;
+    }
+
+    return agendas;
+}
+
+QVector<User> DatabaseManager::getContact(const int userId) {
+    QVector<User> contacts;
+
+    if (!isConnected()) {
+        qWarning() << "[用户操作错误] 数据库未连接";
+        return contacts;
+    }
+
+    QSqlQuery query(db);
+    query.prepare("SELECT u.user_id, u.user_type, u.user_account, u.user_password, u.user_contact, u.expert_skill"
+                    " FROM user AS u"
+                    " WHERE u.user_id IN ("
+                        "SELECT c.user2_id FROM contact AS c WHERE c.user1_id = :userId);");
+    query.bindValue(":userId", userId);
+
+    if (!query.exec()) {
+        qWarning() << "[用户操作错误] 获取失败：" << query.lastError().text();
+        return contacts;
+    }
+    while (query.next()) {
+        User contact;
+        contact.userId = query.value("user_id").toInt();
+        contact.userType = static_cast<UserType>(query.value("user_type").toInt());
+        contact.account = query.value("user_account").toString();
+        contact.password = query.value("user_password").toString();
+        contact.contact = query.value("user_contact").toString();
+        contact.expertSkill = query.value("expert_skill").toString();
+        contacts.append(contact);
+        qInfo() << "GetContact: " << contact.userId;
+    }
+
+    return contacts;
 }

@@ -186,3 +186,25 @@ QGroupBox::title {
 #registerButton:hover {
     color: #5dade2;
 }
+
+/* 角色选择外框容器 */
+#userTypeWidget {
+    background: #ffffff;
+    border: none;
+}
+
+/* 两个单选按钮通用外壳 */
+#rbFactory, #rbExpert {
+    spacing: 0;                 /* 图标和文本间距 */
+    background: #ffffff;
+    color: #666666;
+    font-size: 14px;
+    outline: none;
+}
+
+/* 选中状态 */
+#rbFactory:checked, #rbExpert:checked {
+    background: #ffffff;
+    color: #7B6DC2;
+    border-color: #ffffff;
+}

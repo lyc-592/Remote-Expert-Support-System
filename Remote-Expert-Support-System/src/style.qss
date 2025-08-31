@@ -44,6 +44,152 @@ QToolButton:hover {
     padding: 50px;
 }
 
+/* 联系人列表样式 */
+#ContactList {
+    border: none;
+    background: transparent;
+}
+
+#ContactList::item {
+    border-bottom: 1px solid #eee;
+    padding: 0;
+}
+
+#ContactList::item:selected {
+    background: #e3f2fd;
+}
+
+#ContactName {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* 聊天窗口样式 */
+/* 右侧联系人侧边栏 */
+#ContactsSidebar {
+    background-color: #f8f9fa; /* 原有的浅灰色背景 */
+    border-left: 1px solid #dee2e6;
+}
+
+/* 整个联系人区域容器 */
+#ContactsContainer {
+    background: white;
+    border: none;
+}
+
+/* 标题栏 */
+#ContactsTitleBar {
+    background: white;
+    border-bottom: 1px solid #e0e0e0; /* 浅色分隔线 */
+}
+
+#ContactsTitle {
+    color: #333; /* 深色文字 */
+    background: transparent;
+}
+
+/* 搜索框*/
+#SearchBar {
+    background: white;
+    border-bottom: 1px solid #e0e0e0; /* 浅色分隔线 */
+}
+
+#SearchInput {
+    border: 1px solid #e0e0e0;
+    border-radius: 15px;
+    padding: 5px 15px;
+    font-size: 15px;
+    background: white;
+}
+
+#SearchInput:focus {
+    border-color: #007acc;
+    background: white;
+}
+
+/* 联系人列表 */
+#ContactList {
+    border: none;
+    background: white;
+    outline: none;
+    font-size: 15px;
+}
+
+#ContactList::item {
+    border-bottom: 1px solid #ffffff;
+    background: white;
+}
+
+/*#ContactList::item:hover {
+    background-color: #f5f5f5 !important;
+}
+
+#ContactList::item:selected {
+    background-color: #e3f2fd !important;
+    color: #333;
+}*/
+
+/* 联系人名称样式 */
+#ContactName {
+    font-size: 18px;
+    color: #333;
+    background: transparent;
+}
+
+/* 联系人职位样式 */
+#ContactPosition {
+    font-size: 15px;
+    color: #666;
+    background: transparent;
+}
+
+
+/* 聊天对话框样式 */
+#ChatHeader {
+    background: #0084ff;
+    border-bottom: 1px solid #ddd;
+}
+
+#MenuButton {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#InputWidget {
+    background: white;
+    border-top: 1px solid #e0e0e0;
+}
+
+#MessageInput {
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 8px 15px;
+    font-size: 14px;
+    background: #f5f5f5;
+}
+
+#MessageInput:focus {
+    border-color: #0084ff;
+    background: white;
+}
+
+#SendButton {
+    background: #7B6DC2;
+    color: white;
+    border: 1px solid #5C4F9E;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+#SendButton:hover {
+    background: #5C4F9E;
+}
+
+#SendButton:pressed {
+    background: #5C4F9E;
+}
 
 
 

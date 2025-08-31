@@ -1,5 +1,7 @@
 #include "server.h"
+#include "../../utils/constants.h"
 #include "../../utils/funcs.h"
+#include "../entities/agenda.h"
 #include <QDebug>
 #include <QTcpServer>
 
@@ -74,6 +76,7 @@ void Server::onDisconnected()
 
 void Server::onReadyRead()
 {
+    qDebug() << "Server onReadyRead";
     QTcpSocket *clientSocket = qobject_cast<QTcpSocket*>(sender());
     if (!clientSocket) {
         return;
@@ -84,11 +87,11 @@ void Server::onReadyRead()
     QByteArray &buffer = buffers[clientSocket];
     buffer.append(data);
 
-    qInfo() << "Received data from client:" << data;
+    qInfo() << "Received data from client:" << buffer;
 
-    // 尝试处理缓冲区中的所有完整JSON消息
+    // 处理缓冲区中的所有完整JSON消息
     while (!buffer.isEmpty()) {
-        // 查找JSON对象的开始和结束
+        // 查找第一个JSON对象的起始位置
         int jsonStart = buffer.indexOf('{');
         if (jsonStart == -1) {
             // 没有找到JSON起始标记，清空缓冲区
@@ -96,94 +99,87 @@ void Server::onReadyRead()
             break;
         }
 
-        // 移除起始标记之前的所有数据
+        // 移除起始标记之前的所有非JSON数据
         if (jsonStart > 0) {
             buffer = buffer.mid(jsonStart);
         }
 
-        // 尝试解析JSON
+        // 尝试找到匹配的结束大括号
+        int braceCount = 0;
+        int jsonEnd = -1;
+
+        for (int i = 0; i < buffer.length(); i++) {
+            if (buffer[i] == '{') {
+                braceCount++;
+            } else if (buffer[i] == '}') {
+                braceCount--;
+                if (braceCount == 0) {
+                    jsonEnd = i;
+                    break;
+                }
+            }
+        }
+
+        // 如果没有找到完整的JSON对象，等待更多数据
+        if (jsonEnd == -1) {
+            break;
+        }
+
+        // 提取完整的JSON对象
+        QByteArray jsonData = buffer.left(jsonEnd + 1);
+        buffer = buffer.mid(jsonEnd + 1).trimmed(); // 移除已处理的数据并去除空白
+
+        // 解析JSON
         QJsonParseError error;
-        QJsonDocument doc = QJsonDocument::fromJson(buffer, &error);
+        QJsonDocument doc = QJsonDocument::fromJson(jsonData, &error);
 
         if (error.error == QJsonParseError::NoError && doc.isObject()) {
             // 成功解析JSON对象
             QJsonObject request = doc.object();
-            QString type = request["type"].toString();
+            RequestType type = requestTypeFromString(request["type"].toString());
+            qDebug() << "Request Type: " << request["type"].toString();
 
-            if (type == "login") {
+            switch (type) {
+            case RequestType::Login:
                 processLoginRequest(clientSocket, request);
                 qInfo() << "Login Request Processing...";
-            } else if (type == "register") {
+                break;
+            case RequestType::Register:
                 processRegisterRequest(clientSocket, request);
                 qInfo() << "Register Request Processing...";
-            } else {
+                break;
+            case RequestType::GetUser:
+                processGetUserRequest(clientSocket, request);
+                qInfo() << "GetUser Request Processing...";
+                break;
+            case RequestType::GetAgenda:
+                processGetAgendaRequest(clientSocket, request);
+                qInfo() << "GetAgenda Request Processing...";
+                break;
+            case RequestType::GetContact:
+                processGetContactRequest(clientSocket, request);
+                qInfo() << "GetContact Request Processing...";
+                break;
+            default:
                 // 未知请求类型
                 QJsonObject response;
                 response["success"] = false;
                 response["message"] = "Unknown request type";
                 response["request_id"] = request["request_id"];
                 sendResponse(clientSocket, response);
+                break;
             }
-
-            // 从缓冲区中移除已处理的数据
-            int jsonLength = doc.toJson().length();
-            buffer = buffer.mid(jsonLength);
-        } else if (error.error != QJsonParseError::NoError &&
-                   error.error != QJsonParseError::UnterminatedObject) {
-            // JSON解析错误（不是未完成的对象错误）
+        } else {
+            // JSON解析错误
             qWarning() << "JSON parse error:" << error.errorString();
 
             QJsonObject response;
             response["success"] = false;
             response["message"] = "Invalid JSON format";
             sendResponse(clientSocket, response);
-
-            // 清空缓冲区
-            buffer.clear();
-            break;
-        } else {
-            // 数据不完整，等待更多数据
-            break;
         }
     }
 }
-
-// int Server::findJsonEnd(const QByteArray &data)
-// {
-//     int braceCount = 0;
-//     bool inString = false;
-//     bool escapeNext = false;
-
-//     for (int i = 0; i < data.length(); i++) {
-//         char c = data[i];
-
-//         if (escapeNext) {
-//             escapeNext = false;
-//             continue;
-//         }
-
-//         if (c == '\\') {
-//             escapeNext = true;
-//             continue;
-//         }
-
-//         if (c == '"') {
-//             inString = !inString;
-//             continue;
-//         }
-
-//         if (!inString) {
-//             if (c == '{') braceCount++;
-//             else if (c == '}') braceCount--;
-
-//             if (braceCount == 0 && i > 0) {
-//                 return i;
-//             }
-//         }
-//     }
-
-//     return -1;
-// }
 
 void Server::processLoginRequest(QTcpSocket *clientSocket, const QJsonObject &request)
 {
@@ -226,10 +222,79 @@ void Server::processRegisterRequest(QTcpSocket *clientSocket, const QJsonObject 
     sendResponse(clientSocket, response);
 }
 
-void Server::sendResponse(QTcpSocket *clientSocket, const QJsonObject &response)
-{
+void Server::processGetUserRequest(QTcpSocket *clientSocket, const QJsonObject &request) {
+    QString account = request["username"].toString();
+    QString requestId = request["request_id"].toString();
+    // 调用DatabaseManager获取用户数据
+    User userData = dbManager->getUser(account);
+    // 准备响应
+    QJsonObject response;
+    response["type"] = "getUserResponse";
+    response["success"] = !userData.account.isEmpty(); // 检查是否找到用户
+    response["request_id"] = requestId;
+
+    if (response["success"].toBool()) {
+        response["userData"] = userData.toJson();
+    } else {
+        response["error"] = "User not found";
+    }
+    qDebug() << response;
+
+    sendResponse(clientSocket, response);
+}
+
+void Server::processGetAgendaRequest(QTcpSocket *clientSocket, const QJsonObject &request) {
+    int userId = request["user_id"].toInt();
+    QString requestId = request["request_id"].toString();
+    UserType userType =  static_cast<UserType>(request["user_type"].toInt());
+    QVector<Agenda> agendas = dbManager->getAgenda(userId, userType);
+
+    // 准备响应
+    QJsonObject response;
+    response["type"] = "getAgendaResponse";
+    response["success"] = true;
+    response["request_id"] = requestId;
+
+    // 将议程列表转换为JSON数组
+    QJsonArray agendaArray;
+    for (const Agenda &agenda : agendas) {
+        agendaArray.append(agenda.toJson());
+    }
+    response["agenda"] = agendaArray;
+
+    // 发送响应
+    sendResponse(clientSocket, response);
+}
+
+void Server::processGetContactRequest(QTcpSocket *clientSocket, const QJsonObject &request) {
+    QString requestId = request["request_id"].toString();
+    int userId = request["user_id"].toInt();
+    QVector<User> contacts = dbManager->getContact(userId);
+
+    // 准备响应
+    QJsonObject response;
+    response["type"] = "getContactResponse";
+    response["success"] = true;
+    response["request_id"] = requestId;
+
+    // 将议程列表转换为JSON数组
+    QJsonArray contactArray;
+    for (const User &contact : contacts) {
+        contactArray.append(contact.toJson());
+    }
+    response["contact"] = contactArray;
+
+    // 发送响应
+    sendResponse(clientSocket, response);
+}
+
+void Server::sendResponse(QTcpSocket *clientSocket, const QJsonObject &response) {
+    qDebug() << "Send Response :" << response["type"].toString();
     QJsonDocument doc(response);
-    clientSocket->write(doc.toJson());
+    QByteArray jsonData = doc.toJson(QJsonDocument::Compact);
+    jsonData.append("\nEND_MSG\n"); // 定义一个明确的结束符
+
+    clientSocket->write(jsonData);
     clientSocket->flush();
 }
 

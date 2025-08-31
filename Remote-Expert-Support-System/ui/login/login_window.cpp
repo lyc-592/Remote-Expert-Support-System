@@ -1,6 +1,7 @@
 #include "login_window.h"
 #include "register_dialog.h"
 #include "find_password_dialog.h"
+#include "../index/factory/main_window.h"
 #include <QApplication>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -22,7 +23,7 @@ LoginWindow::LoginWindow(QWidget *parent)
     setupUI();
     loadStyleSheet();
     client = new Client();
-    /* 客户端操作 */
+    /* 客户端操作！ */
     connect(client, &Client::loginResult, this, &LoginWindow::onLoginResult, Qt::QueuedConnection);
     setWindowTitle("Qt QSS 示例 - 用户登录");
     setMinimumSize(500, 400);
@@ -200,6 +201,7 @@ void LoginWindow::onLoginClicked()
     client->login(user, pass);
 }
 
+/* ！ */
 void LoginWindow::onLoginResult(bool success, const QString& message)
 {
     qDebug() << "LoginWindow on Login Result";
@@ -209,7 +211,11 @@ void LoginWindow::onLoginResult(bool success, const QString& message)
                                      .arg(userEdit->text())
                                      .arg(rememberCheck->isChecked() ? "是" : "否")
                                      .arg(autoLoginCheck->isChecked() ? "是" : "否"));
+        client->setUser(userEdit->text());
         // 登录成功后的其他操作，如跳转到主界面
+        MainWindow *mainWindow = new MainWindow(client);
+        mainWindow->show();           // 显示主窗口
+        this->close();                 // 隐藏登录窗口
     } else {
         QMessageBox::warning(this, "登录失败", message);
     }
@@ -235,6 +241,7 @@ void LoginWindow::openRegisterDialog()
     dlg.exec();
 }
 
+/* ！ */
 void LoginWindow::onUserRegistered(const QString &user, const QString &pwd,
                                    UserType userType, const QString &contact,
                                    const QString &expertSkill)

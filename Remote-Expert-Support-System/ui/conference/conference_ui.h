@@ -10,6 +10,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
+#include <QTextBrowser>
 #include "../../client/core/client.h"
 #include "../../server/core/server.h"
 #include "message.h"
@@ -35,6 +36,10 @@ private slots:
     void onServerClientConnected();
     void onServerClientDisconnected();
     void onServerNewMessage(const QByteArray &message);
+
+    void onAnchorClicked(const QUrl &url);
+    void downloadImage(const QString &timestamp);
+    void downloadFile(const QString &timestamp);
 
 private:
     // UI 控件
@@ -63,7 +68,7 @@ private:
 
     QGroupBox *chatGroup;
     QVBoxLayout *chatLayout;
-    QTextEdit *chatTextEdit;
+    QTextBrowser *chatTextEdit;
 
     QGroupBox *logGroup;
     QVBoxLayout *logLayout;
@@ -76,6 +81,10 @@ private:
     // 附件相关
     QString m_attachmentPath;
     MessageType m_attachmentType;
+
+    QMap<QString, QByteArray> m_imageMap; // 存储图片数据，键为时间戳
+    QMap<QString, QPair<QByteArray, QString>> m_fileMap; // 存储文件数据和文件名，键为时间戳
+
 
     void displayMessage(const Message &message);
     void addLogMessage(const QString &message);
