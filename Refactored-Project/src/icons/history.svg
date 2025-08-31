@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- 镂空时钟外框（白色细边框） -->
+  <circle cx="12" cy="12" r="8" fill="none" stroke="white" stroke-width="1.5"/>
+  <!-- 详细刻度线（白色短线，强化时间感） -->
+  <path d="M12 3v1M12 20v1M3 12h1M20 12h1M17.5 4.5l1 1M17.5 18.5l1-1M4.5 18.5l1-1M4.5 4.5l1 1" 
+        stroke="white" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- 当前指针（白色长线条） -->
+  <path d="M12 12l2 5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- 历史指针（白色粗线条，更醒目） -->
+  <path d="M12 12l-5-2" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <!-- 时钟中心（白色圆点，固定指针焦点） -->
+  <circle cx="12" cy="12" r="1.2" fill="white"/>
+</svg>
